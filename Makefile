@@ -23,9 +23,6 @@ install: # установить зависимости проекта
 lint:
 	poetry run flake8 .
 
-test:
-	poetry run pytest
-
 dev:
 	poetry run flask --app page_analyzer:app run
 
@@ -40,4 +37,4 @@ build_poet:
 	poetry run bash ./build.sh
 
 build:
-	poetry run bash ./build.sh
+	bash ./build.sh

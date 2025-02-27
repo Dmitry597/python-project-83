@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block heading %}Сайт: {{ url.name }}{% endblock heading %}
+
+
+{% block table %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover text-nowrap" data-test="url">
+      <tbody>
+        <tr>
+          <td>ID</td>
+          <td>{{ url.id }}</td>
+        </tr>
+        <tr>
+          <td>Имя</td>
+          <td>{{ url.name }}</td>
+        </tr>
+        <tr>
+          <td>Дата создания</td>
+          <td>{{ url.created_at.date() }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+{% endblock table %}
+
+
+
+{% block table_check %}
+{% include 'start_check.html' %}
+{% endblock table_check %}

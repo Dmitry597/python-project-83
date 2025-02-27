@@ -10,14 +10,39 @@ class UrlRepository:
     def get_connection(self):
         return psycopg2.connect(self.db_url)
 
-    def save(self, url_data):
+    def find_url(self, id):
+        with self.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = "SELECT * FROM urls WHERE id = %s"
+                cursor.execute(query, (id,))
+                return cursor.fetchone()
+
+    def show_urls(self):
+        with self.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM urls ORDER BY created_at DESC")
+                return cursor.fetchall()
+
+    def save_url(self, url_data):
         with self.get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO urls (name, created_at) VALUES (%s, %s) "
-                    "RETURNING id",
-                    (url_data, datetime.now()))
+                query = "SELECT id FROM urls WHERE name = %s LIMIT 1;"
+                cursor.execute(query, (url_data,))
+                url_id = cursor.fetchone()
+
+                if url_id:
+                    return ('Страница уже существуета', 'info', url_id[0])
+
+                query = """
+                    INSERT INTO urls (name, created_at)
+                    VALUES (%s, %s)
+                    RETURNING id
+                """
+
+                cursor.execute(query, (url_data, datetime.now()))
+
                 url_id = cursor.fetchone()[0]
 
             conn.commit()
-        return url_id
+
+        return ('Страница успешно добавлена', 'success', url_id)
