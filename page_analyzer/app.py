@@ -42,7 +42,7 @@ def home():
         print('message', message)
         print('id_url', id_url)
         flash(message, categori)
-        return redirect('/')
+        return redirect(url_for('show_all_urls'))
 
     return render_template('home.html')
 
