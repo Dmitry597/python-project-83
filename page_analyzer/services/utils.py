@@ -1,10 +1,17 @@
 from urllib.parse import urlparse
+
 import validators
-from flask import (render_template,
+from flask import (current_app, render_template,
                    request,
                    redirect,
                    url_for,
                    flash)
+
+from page_analyzer.models.url_repository import UrlRepository
+
+
+def get_url_repository():
+    return UrlRepository(current_app.config['DATABASE_URL'])
 
 
 def handle_new_url(url_repo):
@@ -13,12 +20,12 @@ def handle_new_url(url_repo):
 
     if errors:
         flash(errors['message'], 'danger')
-        return redirect(url_for('home'))
+        return redirect(url_for('url.home'))
 
     normalize_url = '://'.join(urlparse(url)[:2])
     message, category, id_url = url_repo.save_url(normalize_url)
     flash(message, category)
-    return redirect(url_for('url_manager'))
+    return redirect(url_for('url.url_manager'))
 
 
 def show_all_urls(url_repo):
