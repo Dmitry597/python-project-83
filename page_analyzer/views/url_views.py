@@ -1,12 +1,15 @@
-from flask import (Blueprint,
-                   abort,
-                   render_template,
-                   request,
-                   g)
+from flask import (
+    Blueprint,
+    abort,
+    render_template,
+    url_for,
+    redirect,
+    request,
+    flash,
+    g
+)
 
-from page_analyzer.services.utils import (get_url_repository,
-                                          handle_new_url,
-                                          show_all_urls)
+from page_analyzer.services.utils import (get_url_repository, handle_new_url)
 
 
 url_blueprint = Blueprint('url', __name__)
@@ -26,8 +29,18 @@ def home():
 def url_manager():
 
     if request.method == 'POST':
-        return handle_new_url(g.url_repo)
-    return show_all_urls(g.url_repo)
+        message, category, path_url = handle_new_url(
+            request.form['url'],
+            g.url_repo
+        )
+
+        flash(message, category)
+
+        return redirect(url_for(path_url))
+
+    all_urls = g.url_repo.show_urls()
+
+    return render_template('all_urls.html', urls=all_urls)
 
 
 @url_blueprint.route('/urls/<int:id>')
