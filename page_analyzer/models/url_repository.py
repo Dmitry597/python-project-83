@@ -20,7 +20,26 @@ class UrlRepository:
     def show_urls(self):
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT * FROM urls ORDER BY created_at DESC")
+                query = """
+                    SELECT
+                        urls.id,
+                        urls.name,
+                        url_checks.status_code,
+                        url_checks.created_at,
+                        urls.created_at AS url_created_at
+                    FROM
+                        urls
+                    LEFT JOIN
+                        url_checks ON urls.id = url_checks.url_id
+                        AND url_checks.created_at = (
+                            SELECT MAX(created_at)
+                            FROM url_checks
+                            WHERE urls.id = url_checks.url_id
+                        )
+                    ORDER BY
+                        urls.created_at DESC;
+                """
+                cursor.execute(query)
                 return cursor.fetchall()
 
     def save_url(self, url_data):
@@ -31,7 +50,7 @@ class UrlRepository:
                 url_id = cursor.fetchone()
 
                 if url_id:
-                    return ('Страница уже существуета', 'info', url_id[0])
+                    return ('Страница уже существует', 'info', url_id[0])
 
                 query = """
                     INSERT INTO urls (name, created_at)
@@ -46,3 +65,26 @@ class UrlRepository:
             conn.commit()
 
         return ('Страница успешно добавлена', 'success', url_id)
+
+    def save_checks_url(self, url_id):
+        with self.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                    INSERT INTO url_checks (url_id, created_at)
+                    VALUES (%s, %s)
+                """
+
+                cursor.execute(query, (url_id, datetime.now()))
+
+                return ('Страница успешно проверена', 'success')
+
+    def find_checks_urll(self, url_id):
+        with self.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                query = """
+                        SELECT * FROM url_checks
+                        WHERE url_id = %s
+                        ORDER BY created_at DESC;
+                    """
+                cursor.execute(query, (url_id,))
+                return cursor.fetchall()

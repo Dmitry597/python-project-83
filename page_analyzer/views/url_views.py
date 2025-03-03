@@ -43,15 +43,31 @@ def url_manager():
     return render_template('all_urls.html', urls=all_urls)
 
 
-@url_blueprint.route('/urls/<int:id>')
+@url_blueprint.route('/urls/<int:id>', methods=['GET'])
 def show_url(id):
 
     info_url = g.url_repo.find_url(id)
 
+    info_checks_url = g.url_repo.find_checks_urll(id)
+
     if not info_url:
         abort(404)
 
-    return render_template('url_detail.html', url=info_url)
+    return render_template(
+        'url_detail.html',
+        url=info_url,
+        checks_url=info_checks_url
+    )
+
+
+@url_blueprint.route('/urls/<int:url_id>/checks', methods=['POST'])
+def checks_url(url_id):
+
+    message, category = g.url_repo.save_checks_url(url_id)
+
+    flash(message, category)
+
+    return redirect(url_for('url.show_url', id=url_id))
 
 
 def error_handlers(app):
