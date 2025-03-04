@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block heading %}Упс, что-то пошло не так{% endblock heading %}
+
+{% block body %}
+
+    <div class="row row-cols-1 row-cols-lg-2 align-items-lg-center">
+        <div class="col">
+        <h2 class="h2 mb-4">
+            Ошибка {{ error_code }}
+        </h2>
+        <p>Произошла ошибка на сервере. Пожалуйста, попробуйте позже.</p>
+        <p><a href="/">Вернуться на главную</a></p>
+        </div>
+    </div>
+
+{% endblock body %}

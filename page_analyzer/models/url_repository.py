@@ -50,7 +50,7 @@ class UrlRepository:
                 url_id = cursor.fetchone()
 
                 if url_id:
-                    return ('Страница уже существует', 'info', url_id[0])
+                    return 'Страница уже существует', 'info', url_id[0]
 
                 query = """
                     INSERT INTO urls (name, created_at)
@@ -64,19 +64,19 @@ class UrlRepository:
 
             conn.commit()
 
-        return ('Страница успешно добавлена', 'success', url_id)
+        return 'Страница успешно добавлена', 'success', url_id
 
-    def save_checks_url(self, url_id):
+    def save_checks_url(self, url_id, status_code):
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 query = """
-                    INSERT INTO url_checks (url_id, created_at)
-                    VALUES (%s, %s)
+                    INSERT INTO url_checks (url_id, status_code, created_at)
+                    VALUES (%s, %s, %s)
                 """
 
-                cursor.execute(query, (url_id, datetime.now()))
+                cursor.execute(query, (url_id, status_code, datetime.now()))
 
-                return ('Страница успешно проверена', 'success')
+                return 'Страница успешно проверена', 'success'
 
     def find_checks_urll(self, url_id):
         with self.get_connection() as conn:
