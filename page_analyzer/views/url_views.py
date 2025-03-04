@@ -12,7 +12,8 @@ from flask import (
 from page_analyzer.services.utils import (
     get_url_repository,
     handle_new_url,
-    handle_checks_url
+    handle_checks_url,
+    validate
 )
 
 
@@ -33,18 +34,51 @@ def home():
 def url_manager():
 
     if request.method == 'POST':
-        message, category, redirect_path = handle_new_url(
-            request.form['url'],
-            g.url_repo
-        )
+        url = request.form['url']
+
+        errors = validate(url)
+
+        if errors:
+            message, category = errors['message'], 'danger'
+            redirect_path = 'url.home'
+
+            flash(message, category)
+
+            return redirect(url_for(redirect_path))
+
+        message, category, url_id = handle_new_url(url, g.url_repo)
+        redirect_path = 'url.show_url'
 
         flash(message, category)
 
-        return redirect(url_for(redirect_path))
+        return redirect(url_for(redirect_path, id=url_id))
 
     all_urls = g.url_repo.show_urls()
 
     return render_template('all_urls.html', urls=all_urls)
+
+# @url_blueprint.route('/urls', methods=['GET', 'POST'])
+# def url_manager():
+
+#     if request.method == 'POST':
+#         url = request.form['url']
+
+#         errors = validate(url)
+
+#         if errors:
+#             message, category = errors['message'], 'danger'
+#             redirect_path = '/'
+#         else:
+#             message, category, url_id = handle_new_url(url, g.url_repo)
+#             redirect_path = f'/urls/{url_id}'
+
+#         flash(message, category)
+
+#         return redirect(redirect_path)
+
+#     all_urls = g.url_repo.show_urls()
+
+#     return render_template('all_urls.html', urls=all_urls)
 
 
 @url_blueprint.route('/urls/<int:id>', methods=['GET'])
@@ -79,12 +113,12 @@ def error_handlers(app):
     def page_not_found(error):
         return render_template('page404.html'), 404
 
-    @app.errorhandler(Exception)
-    def handle_general_exception(error):
-        error_code = getattr(error, 'code', 500)
+    # @app.errorhandler(Exception)
+    # def handle_general_exception(error):
+    #     error_code = getattr(error, 'code', 500)
 
-        if error_code >= 500:
-            return render_template(
-                'page500.html',
-                error_code=error_code
-            ), error_code
+    #     if error_code >= 500:
+    #         return render_template(
+    #             'page500.html',
+    #             error_code=error_code
+    #         ), error_code

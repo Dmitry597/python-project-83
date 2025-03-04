@@ -11,6 +11,7 @@ class UrlRepository:
         return psycopg2.connect(self.db_url)
 
     def find_url(self, id):
+
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 query = "SELECT * FROM urls WHERE id = %s"
@@ -18,6 +19,7 @@ class UrlRepository:
                 return cursor.fetchone()
 
     def show_urls(self):
+
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 query = """
@@ -43,6 +45,7 @@ class UrlRepository:
                 return cursor.fetchall()
 
     def save_url(self, url_data):
+
         with self.get_connection() as conn:
             with conn.cursor() as cursor:
                 query = "SELECT id FROM urls WHERE name = %s LIMIT 1;"
@@ -66,19 +69,34 @@ class UrlRepository:
 
         return 'Страница успешно добавлена', 'success', url_id
 
-    def save_checks_url(self, url_id, status_code):
+    def save_checks_url(self, url_id, status_code, h1, title, description):
+
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 query = """
-                    INSERT INTO url_checks (url_id, status_code, created_at)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO url_checks (
+                        url_id,
+                        status_code,
+                        h1,
+                        title,
+                        description,
+                        created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """
 
-                cursor.execute(query, (url_id, status_code, datetime.now()))
+                cursor.execute(query, (
+                    url_id,
+                    status_code,
+                    h1,
+                    title,
+                    description,
+                    datetime.now())
+                )
 
                 return 'Страница успешно проверена', 'success'
 
     def find_checks_urll(self, url_id):
+
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 query = """
@@ -87,4 +105,5 @@ class UrlRepository:
                         ORDER BY created_at DESC;
                     """
                 cursor.execute(query, (url_id,))
+
                 return cursor.fetchall()
