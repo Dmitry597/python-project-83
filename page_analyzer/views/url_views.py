@@ -44,7 +44,9 @@ def url_manager():
 
             flash(message, category)
 
-            return redirect(url_for(redirect_path))
+            return render_template('home.html'), 422
+
+            # return redirect(url_for(redirect_path))
 
         message, category, url_id = handle_new_url(url, g.url_repo)
         redirect_path = 'url.show_url'
