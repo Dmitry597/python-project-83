@@ -53,7 +53,8 @@ class UrlRepository:
                 url_id = cursor.fetchone()
 
                 if url_id:
-                    return 'Страница уже существует', 'info', url_id[0]
+                    # return 'Страница уже существует', 'info', url_id[0]
+                    return True, url_id[0]
 
                 query = """
                     INSERT INTO urls (name, created_at)
@@ -67,7 +68,8 @@ class UrlRepository:
 
             conn.commit()
 
-        return 'Страница успешно добавлена', 'success', url_id
+        # return 'Страница успешно добавлена', 'success', url_id
+        return False, url_id
 
     def save_checks_url(self, url_id, status_code, h1, title, description):
 
@@ -93,7 +95,8 @@ class UrlRepository:
                     datetime.now())
                 )
 
-                return 'Страница успешно проверена', 'success'
+                # return 'Страница успешно проверена', 'success'
+                # return True
 
     def find_checks_urll(self, url_id):
 

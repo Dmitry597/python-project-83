@@ -31,7 +31,12 @@ def handle_new_url(url, url_repo):
 
     normalize_url = '://'.join(urlparse(url)[:2])
 
-    message, category, id_url = url_repo.save_url(normalize_url)
+    info, id_url = url_repo.save_url(normalize_url)
+
+    if info:
+        message, category = 'Страница уже существует', 'info'
+    else:
+        message, category = 'Страница успешно добавлена', 'success'
 
     return message, category, id_url
 
@@ -47,13 +52,14 @@ def handle_checks_url(url_id, url_repo):
     if errors:
         message, category = errors['message'], errors['category']
     else:
-        message, category = url_repo.save_checks_url(
+        url_repo.save_checks_url(
             url_id,
             analyzer.status_code,
             analyzer.h1,
             analyzer.title,
             analyzer.description
         )
+        message, category = 'Страница успешно проверена', 'success'
 
     return message, category
 

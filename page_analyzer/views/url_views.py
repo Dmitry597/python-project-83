@@ -40,24 +40,50 @@ def url_manager():
 
         if errors:
             message, category = errors['message'], 'danger'
-            redirect_path = 'url.home'
 
             flash(message, category)
 
             return render_template('home.html'), 422
 
-            # return redirect(url_for(redirect_path))
-
         message, category, url_id = handle_new_url(url, g.url_repo)
-        redirect_path = 'url.show_url'
 
         flash(message, category)
 
-        return redirect(url_for(redirect_path, id=url_id))
+        return redirect(url_for('url.show_url', id=url_id))
 
     all_urls = g.url_repo.show_urls()
 
     return render_template('all_urls.html', urls=all_urls)
+
+
+# @url_blueprint.route('/urls', methods=['GET', 'POST'])
+# def url_manager():
+
+#     if request.method == 'POST':
+#         url = request.form['url']
+
+#         errors = validate(url)
+
+#         if errors:
+#             message, category = errors['message'], 'danger'
+#             redirect_path = 'url.home'
+
+#             flash(message, category)
+
+#             return render_template('home.html'), 422
+
+#             # return redirect(url_for(redirect_path))
+
+#         message, category, url_id = handle_new_url(url, g.url_repo)
+#         redirect_path = 'url.show_url'
+
+#         flash(message, category)
+
+#         return redirect(url_for(redirect_path, id=url_id))
+
+#     all_urls = g.url_repo.show_urls()
+
+#     return render_template('all_urls.html', urls=all_urls)
 
 # @url_blueprint.route('/urls', methods=['GET', 'POST'])
 # def url_manager():
@@ -115,12 +141,12 @@ def error_handlers(app):
     def page_not_found(error):
         return render_template('page404.html'), 404
 
-    # @app.errorhandler(Exception)
-    # def handle_general_exception(error):
-    #     error_code = getattr(error, 'code', 500)
+    @app.errorhandler(Exception)
+    def handle_general_exception(error):
+        error_code = getattr(error, 'code', 500)
 
-    #     if error_code >= 500:
-    #         return render_template(
-    #             'page500.html',
-    #             error_code=error_code
-    #         ), error_code
+        if error_code >= 500:
+            return render_template(
+                'page500.html',
+                error_code=error_code
+            ), error_code
