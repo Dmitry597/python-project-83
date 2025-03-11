@@ -4,13 +4,22 @@ from logging.handlers import RotatingFileHandler
 
 
 def setup_logging(
-    name,
-    log_file='app.log',
-    level=logging.INFO,
-    console_level=logging.INFO
-):
+    name: str,
+    log_file: str = 'app.log',
+    level: int = logging.INFO,
+    console_level: int = logging.INFO
+) -> logging.Logger:
 
-    """Настройка логгера для записи в файл и в консоль."""
+    """
+    Настройка логгера для записи в файл и в консоль.
+
+    Params:
+        name: Имя логгера, которое будет использоваться для идентификации.
+        log_file: Имя файла, в который будут записываться логи.
+        level: Уровень логирования для записи в файл.
+        console_level: Уровень логирования для вывода в консоль.
+    """
+
     # Создание директории для логов, если её нет
     if not os.path.exists('logs'):
         os.makedirs('logs')
@@ -23,7 +32,8 @@ def setup_logging(
         # Создание обработчика для записи логов в файл с ротацией
         file_handler = RotatingFileHandler(
             os.path.join('logs', log_file),
-            maxBytes=10 * 1024 * 1024, backupCount=10,
+            maxBytes=10 * 1024 * 1024,  # Максимальный размер файла лога (10 MB)
+            backupCount=10,  # Количество резервных копий
             encoding='utf-8')
         file_handler.setLevel(level)
 

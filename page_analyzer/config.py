@@ -6,5 +6,12 @@ load_dotenv()
 
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY')
-    DATABASE_URL = os.getenv('DATABASE_URL')
+    """
+    Класс конфигурации для приложения.
+
+    Класс содержит настройки, необходимые для работы приложения.
+
+    """
+
+    SECRET_KEY: str = os.getenv('SECRET_KEY')
+    DATABASE_URL: str = os.getenv('DATABASE_URL')
