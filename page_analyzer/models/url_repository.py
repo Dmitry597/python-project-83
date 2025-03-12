@@ -316,9 +316,14 @@ class UrlRepository:
         """
 
         if result:
-            logger.info("Функция '%s', получены данные "
-                        "для URL с 'id'=%s, данные: %s", func_name, id, result
-                        )
+            logger.info(
+                "Функция '%s', получены данные "
+                "для URL с 'id'=%s, данные: %s",
+                func_name, id, result
+            )
         else:
-            logger.warning("Функция '%s', данные не найдены "
-                           "для URL с 'id'=%s", func_name, id)
+            logger.info(
+                "Функция '%s', данные не найдены "
+                "для URL с 'id'=%s",
+                func_name, id
+            )
