@@ -4,15 +4,9 @@ from typing import Any, Dict
 from bs4 import BeautifulSoup
 import requests
 
-from page_analyzer.logging_config import setup_logging
 
-
-# Настраиваем логирование для текущего модуля
-logger = setup_logging(
-    __name__,  # Имя логгера будет соответствовать имени текущего модуля
-    level=logging.WARNING,  # Устанавливаем уровень логирования для файла
-    console_level=logging.INFO  # Устанавливаем уровень логирования для консоли
-)
+# Получение логгера с именем текущего модуля для записи логов
+logger = logging.getLogger(__name__)
 
 
 class PageAnalyzer:

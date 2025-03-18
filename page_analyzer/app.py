@@ -2,10 +2,13 @@ from flask import Flask
 from dotenv import load_dotenv
 
 from page_analyzer.config import Config
+from page_analyzer.log_setup import setup_logging
 from page_analyzer.views.url_views import error_handlers, url_blueprint
 
 
-load_dotenv()
+load_dotenv()  # Загрузка файл .env, для настройки переменных окружения из него
+
+setup_logging()  # Инициализация логирования
 
 
 def create_app() -> Flask:
@@ -32,4 +35,4 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=False)
+    app.run(debug=True)

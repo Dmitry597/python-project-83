@@ -4,17 +4,11 @@ from urllib.parse import urlparse
 import validators
 from flask import abort, current_app
 
-from page_analyzer.models.url_repository import UrlRepository
+from page_analyzer.repositories.url import UrlRepository
 from page_analyzer.services.parser import PageAnalyzer
-from page_analyzer.logging_config import setup_logging
 
-
-# Настраиваем логирование для текущего модуля
-logger = setup_logging(
-    __name__,  # Имя логгера будет соответствовать имени текущего модуля
-    level=logging.WARNING,  # Устанавливаем уровень логирования для файла
-    console_level=logging.INFO  # Устанавливаем уровень логирования для консоли
-)
+# Получение логгера с именем текущего модуля для записи логов
+logger = logging.getLogger(__name__)
 
 
 def get_url_repository() -> UrlRepository:
@@ -45,42 +39,34 @@ def handle_new_url(
         "Функция: 'handle_new_url'. Нормализованный URL: %s",
         normalize_url
     )
-    try:
-        # Сохраняем нормализованный URL в репозитории
-        info, id_url = url_repo.save_url(normalize_url)
 
-        logger.debug(
-            "Функция: 'handle_new_url'. Сохранила результат: "
-            "'info'=%s, 'id_url'=%s}",
-            info, id_url
-        )
-        # Формируем сообщение и категорию в зависимости от результата сохранения
-        if info:
-            message, category = 'Страница уже существует', 'info'
-        else:
-            message, category = 'Страница успешно добавлена', 'success'
+    # Сохраняем нормализованный URL в репозитории
+    info, id_url = url_repo.save_url(normalize_url)
 
-        logger.debug(
-            "Функция: 'handle_new_url'."
-            "Полученное сообщение: '%s', категория: '%s'",
-            message, category
-        )
+    logger.debug(
+        "Функция: 'handle_new_url'. Сохранила результат: "
+        "'info'=%s, 'id_url'=%s}",
+        info, id_url
+    )
+    # Формируем сообщение и категорию в зависимости от результата сохранения
+    if info:
+        message, category = 'Страница уже существует', 'info'
+    else:
+        message, category = 'Страница успешно добавлена', 'success'
 
-        return message, category, id_url
+    logger.debug(
+        "Функция: 'handle_new_url'."
+        "Полученное сообщение: '%s', категория: '%s'",
+        message, category
+    )
 
-    except Exception as e:
-        logging.error(
-            "Функция: 'handle_new_url'.Неизвестная ошибка: %s",
-            e,
-            exc_info=True
-        )
-
-        return 'Неизвестная ошибка', 'danger', None
+    return message, category, id_url
 
 
 def handle_checks_url(
     url_id: int, url_repo: 'UrlRepository'
 ) -> tuple[str, str]:
+
     """
     Обрабатывает проверку URL, извлекая информацию о странице и
     сохраняя результаты проверки.
@@ -161,6 +147,7 @@ def validate(url: str) -> dict:
     Возвращает cловарь с сообщениями об ошибках, если таковые имеются.
     Если ошибок нет, возвращается пустой словарь.
     """
+
     logger.debug("Начало валидации URL: '%s'", url)
 
     errors = {}

@@ -17,15 +17,10 @@ from page_analyzer.services.utils import (
     handle_checks_url,
     validate
 )
-from page_analyzer.logging_config import setup_logging
 
 
-# Настраиваем логирование для текущего модуля
-logger = setup_logging(
-    __name__,  # Имя логгера будет соответствовать имени текущего модуля
-    level=logging.WARNING,  # Устанавливаем уровень логирования для файла
-    console_level=logging.INFO  # Устанавливаем уровень логирования для консоли
-)
+# Получение логгера с именем текущего модуля для записи логов
+logger = logging.getLogger(__name__)
 
 url_blueprint = Blueprint('url', __name__)
 

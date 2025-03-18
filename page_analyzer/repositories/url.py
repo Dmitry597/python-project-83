@@ -1,66 +1,15 @@
 from datetime import datetime
-from functools import wraps
 import logging
-from typing import Callable, Any, List, Optional, Dict, Tuple
+from typing import Any, List, Optional, Dict, Tuple
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from page_analyzer.logging_config import setup_logging
+from page_analyzer.repositories.database_exceptions import db_exception_handler
 
 
-# Настраиваем логирование для текущего модуля
-logger = setup_logging(
-    __name__,  # Имя логгера будет соответствовать имени текущего модуля
-    level=logging.WARNING,  # Устанавливаем уровень логирования для файла
-    console_level=logging.INFO  # Устанавливаем уровень логирования для консоли
-)
-
-
-def db_exception_handler(
-    func: Callable[..., Any]
-) -> Callable[..., Optional[Any]]:
-
-    """
-    Декоратор для обработки исключений базы данных.
-
-    Этот декоратор обрабатывает исключения, возникающие в функции,
-    и записывает информацию об ошибках в лог.
-
-    Если возникает ошибка `psycopg2.Error`, она логируется как ошибка бд.
-
-    Все остальные ошибки логируются как неожиданные.
-
-    """
-
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Optional[Any]:
-
-        try:
-            return func(*args, **kwargs)
-
-        except psycopg2.Error as error:
-            logger.error(
-                "Функция: '%s'. Ошибка 'БД'. Аргументы: [%r], ошибка: [%s]",
-                func.__name__,
-                (args, kwargs),
-                error,
-
-                exc_info=True
-            )
-
-        except Exception as error:
-
-            logger.exception(
-                "Функция: '%s'. Неожиданная ошибка при выполнении. "
-                "Аргументы: [%r], ошибка: [%s]",
-                func.__name__,
-                (args, kwargs),
-                error,
-
-                exc_info=True
-            )
-    return wrapper
+# Получение логгера с именем текущего модуля для записи логов
+logger = logging.getLogger(__name__)
 
 
 class UrlRepository:
