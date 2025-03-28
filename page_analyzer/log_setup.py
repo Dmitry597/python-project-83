@@ -2,47 +2,87 @@ import logging
 import os
 import logging.config
 
-import yaml
 
-
-def setup_logging(
-    config_path: str = 'logging_config.yaml',
-    default_level: int = logging.INFO
-) -> None:
+def setup_logging() -> None:
 
     """
     Настройка логгера для записи в файл и в консоль.
 
     Функция проверяет наличие директории для логов,
-    создает её при отсутствии, настраивает систему логирования с использованием
-    указанного файла конфигурации.
-
-    Если файл не найден, устанавливается уровень логирования по умолчанию
-    с стандартным форматом сообщений.
+    создает её при отсутствии, настраивает систему логирования.
     """
 
     if not os.path.exists('logs'):
         os.makedirs('logs')
 
-    # Проверяем, существует ли файл конфигурации
-    if os.path.exists(config_path):
-        # Загружаем конфигурацию логирования из YAML файла
-        with open(config_path, 'rt') as f:
-            config = yaml.safe_load(f.read())
+    # Определяем конфигурацию логирования в коде
+    logging_config = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'default': {
+                'format': "[%(asctime)s.%(msecs)03d] "
+                "[%(name)-50s] "
+                "[%(module)-30s:%(lineno)-3d] "
+                "[%(levelname)-8s] -> "
+                "%(message)s",
 
-        logging.config.dictConfig(config)
-    else:
-        print('NOOOO')
-        # Если файл не найден, устанавливаем уровень логирования по умолчанию
-        log_format = (
-            "[%(asctime)s.%(msecs)03d] "
-            "[%(name)-50s] "
-            "[%(module)-15s:%(lineno)-3d] "
-            "[%(levelname)-8s] -> "
-            "%(message)s"
-        )
-        log_datefmt = "%Y-%m-%d %H:%M:%S"
+                'datefmt': "%Y-%m-%d %H:%M:%S"
+            }
+        },
+        'handlers': {
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'WARNING',
+                'formatter': 'default',
+                'filename': 'logs/app.log',
+                'maxBytes': 10485760,  # 10 MB
+                'backupCount': 10,
+                'encoding': 'utf-8'
+            },
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'INFO',
+                'formatter': 'default'
+            }
+        },
+        'root': {
+            'level': 'ERROR',
+            'handlers': ['console']
+        },
+        'loggers': {
+            'page_analyzer': {
+                'level': 'DEBUG',
+                'handlers': ['console', 'file'],
+                'propagate': False
+            },
+            'werkzeug': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False
+            },
+            'dotenv': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False
+            },
+            'charset_normalizer': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False
+            },
+            'urllib3': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False
+            },
+            'requests': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False
+            }
+        }
+    }
 
-        logging.basicConfig(
-            level=default_level, format=log_format, datefmt=log_datefmt
-        )
+    # Применяем конфигурацию логирования
+    logging.config.dictConfig(logging_config)

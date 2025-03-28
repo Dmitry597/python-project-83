@@ -1,9 +1,16 @@
+import signal
+
 from flask import Flask
 from dotenv import load_dotenv
 
 from page_analyzer.config import Config
+from page_analyzer.db_connections.connection_manager import (
+    ConnectionPool, create_signal_handler
+)
+from page_analyzer.error_handlers import handle_error
 from page_analyzer.log_setup import setup_logging
-from page_analyzer.views.url_views import error_handlers, url_blueprint
+from page_analyzer.repositories.url import UrlRepository
+from page_analyzer.views.url_views import url_blueprint
 
 
 load_dotenv()  # Загрузка файл .env, для настройки переменных окружения из него
@@ -26,9 +33,19 @@ def create_app() -> Flask:
 
     app.config.from_object(Config)  # Загружает конфигурацию из класса Config
 
+    database_url = app.config.get("DATABASE_URL")
+    app.connection_pool = ConnectionPool(database_url)  # noqa Инициализация пула соединений
+
+    app.url_repo = UrlRepository(app.connection_pool)  # noqa Инициализация UrlsRepository
+
     app.register_blueprint(url_blueprint)  # Регистрирует blueprint
 
-    error_handlers(app)  # Устанавливает обработчики ошибок для приложения
+    handle_error(app)  # Устанавливает обработчики ошибок для приложения
+
+    # Установка обработчиков сигналов
+    handler = create_signal_handler(app)
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGTERM, handler)
 
     return app  # Возвращает настроенное приложение
 

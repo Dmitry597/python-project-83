@@ -2,25 +2,16 @@ import logging
 from urllib.parse import urlparse
 
 import validators
-from flask import abort, current_app
+from flask import abort
 
-from page_analyzer.repositories.url import UrlRepository
 from page_analyzer.services.parser import PageAnalyzer
 
 # Получение логгера с именем текущего модуля для записи логов
 logger = logging.getLogger(__name__)
 
 
-def get_url_repository() -> UrlRepository:
-    """
-    Создает экземпляр UrlRepository с использованием URL базы данных
-    из конфигурации текущего приложения.
-    """
-    return UrlRepository(current_app.config['DATABASE_URL'])
-
-
 def handle_new_url(
-    url: str, url_repo: UrlRepository
+    url: str, url_repo
 ) -> tuple[str, str, int | None]:
 
     """
@@ -64,7 +55,7 @@ def handle_new_url(
 
 
 def handle_checks_url(
-    url_id: int, url_repo: 'UrlRepository'
+    url_id: int, url_repo
 ) -> tuple[str, str]:
 
     """
@@ -100,7 +91,7 @@ def handle_checks_url(
     errors = analyzer.get_page_content()
 
     if errors:
-        # Если ошибок нет, сохраняем результаты проверки URL
+        # Если ошибоки есть, сохраняем результаты проверки URL
         message, category = errors['message'], errors['category']
 
         logger.warning(
@@ -160,7 +151,7 @@ def validate(url: str) -> dict:
 
     # Если есть ошибки, логируем их, иначе логируем успешную валидацию
     if errors:
-        logger.debug(
+        logger.info(
             "Функция: 'validate'. Ошибки валидации для URL '%s': %s",
             url, errors
         )
