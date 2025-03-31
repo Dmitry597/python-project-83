@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   page_analyzer:
     build:

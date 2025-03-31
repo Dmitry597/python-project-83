@@ -25,7 +25,7 @@ class ConnectionPool:
     _instance: Optional['ConnectionPool'] = None
 
     def __new__(
-        cls, db_url: str, minconn: int = 1, maxconn: int = 20
+        cls, db_url: str, minconn: int = 1, maxconn: int = 50
     ) -> 'ConnectionPool':
 
         if cls._instance is None:
@@ -45,39 +45,71 @@ class ConnectionPool:
 
     def get_connection(self):
         if self.connection_pool:
-            connection = self.connection_pool.getconn()
+            try:
+                connection = self.connection_pool.getconn()
 
-            logger.info(
-                "Класс 'ConnectionPool', метод 'get_connection'. "
-                "Получено новое соединение из пула: %s",
-                connection
-            )
+                logger.info(
+                    "Класс 'ConnectionPool', метод 'get_connection'. "
+                    "Получено новое соединение из пула: %s",
+                    connection
+                )
 
-            return connection
+                return connection
+            except psycopg2.Error as error:
+                logger.error(
+                    "Класс 'ConnectionPool', метод 'get_connection'. "
+                    "Ошибка получения соединения: '%s'",
+                    error, exc_info=True
+                )
+
+                return None
 
     def release_connection(self, connection):
 
-        if self.connection_pool:
+        if self.connection_pool and connection:
 
-            self.connection_pool.putconn(connection)
+            try:
 
-            logger.info(
-                "Класс 'ConnectionPool', метод 'release_connection'. "
-                "Соединение возвращено в пул: %s",
-                connection
-            )
+                self.connection_pool.putconn(connection)
+
+                logger.info(
+                    "Класс 'ConnectionPool', метод 'release_connection'. "
+                    "Соединение возвращено в пул: %s",
+                    connection
+                )
+
+            except psycopg2.Error as error:
+                logger.error(
+                    "Класс 'ConnectionPool', метод 'release_connection'. "
+                    "Ошибка возврата соединения в пул: '%s'",
+                    error, exc_info=True
+                )
+
+                raise psycopg2.Error(
+                    "Не удалось вернуть соединение в пул.") from error
 
     def close_connection_pool(self):
 
         if self.connection_pool:
+            try:
+                self.connection_pool.closeall()
 
-            self.connection_pool.closeall()
+                logger.info(
+                    "Класс 'ConnectionPool', метод 'close_connection_pool'. "
+                    "Пул соединений закрыт. connection_pool: %s",
+                    self.connection_pool
+                )
 
-            logger.debug(
-                "Класс 'ConnectionPool', метод 'close_connection_pool'. "
-                "Пул соединений закрыт. connection_pool: %s",
-                self.connection_pool
-            )
+            except Exception as error:
+                logger.error(
+                    "Класс 'ConnectionPool', метод 'close_connection_pool'. "
+                    "Ошибка закрытия пула соединений: '%s', ошибка: '%s'",
+                    self.connection_pool, error, exc_info=True
+                )
+
+                raise psycopg2.Error(
+                    "Не удалось закрыть пул соединений."
+                ) from error
 
 
 class DatabaseConnection:
@@ -90,7 +122,14 @@ class DatabaseConnection:
     def __enter__(self):
         self.connection = self.connection_pool.get_connection()
 
-        logger.debug(
+        if self.connection is None:
+            logger.error(
+                "Класс 'DatabaseConnection',  метод '__enter__'. "
+                "Не удалось получить соединение из пула."
+            )
+            raise psycopg2.Error("Не удалось получить соединение из пула.")
+
+        logger.info(
             "Класс 'DatabaseConnection',  метод '__enter__'. "
             "Вход в контекстный менеджер, получено соединение: %s",
             self.connection
@@ -100,33 +139,42 @@ class DatabaseConnection:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.connection:
-            if exc_type is None:
-                # Если нет исключений, коммитим изменения
-                self.connection.commit()
 
-                logger.debug(
-                    "Класс 'DatabaseConnection',  метод '__exit__'. "
-                    "Коммит изменений, соединение: %s",
-                    self.connection
-                )
+            try:
+                if exc_type is None:
+                    # Если нет исключений, коммитим изменения
+                    self.connection.commit()
 
-            else:
-                # Если было исключение, откатываем изменения
-                self.connection.rollback()
+                    logger.info(
+                        "Класс 'DatabaseConnection',  метод '__exit__'. "
+                        "Коммит изменений, соединение: %s",
+                        self.connection
+                    )
 
+                else:
+                    # Если было исключение, откатываем изменения
+                    self.connection.rollback()
+                    logger.error(
+                        "Класс 'DatabaseConnection',  метод '__exit__'. "
+                        "Откат изменений из-за исключения: '%s', %s",
+                        exc_type, exc_val
+                    )
+            except psycopg2.Error as error:
                 logger.error(
                     "Класс 'DatabaseConnection',  метод '__exit__'. "
-                    "Откат изменений из-за исключения: '%s', %s",
-                    exc_type, exc_val
+                    "Ошибка при работе с соединением: '%s'",
+                    error, exc_info=True
                 )
+            finally:
+                # noqa Освобождаем соединение независимо от того, произошла ошибка или нет
+                self.connection_pool.release_connection(self.connection)
 
-            self.connection_pool.release_connection(self.connection)
-
-            logger.debug(
-                "Класс 'DatabaseConnection',  метод '__exit__'. "
-                "Выход из контекстного менеджера, соединение освобождено: %s",
-                self.connection
-            )
+                logger.info(
+                    "Класс 'DatabaseConnection',  метод '__exit__'. "
+                    "Выход из контекстного менеджера, "
+                    "соединение освобождено: %s",
+                    self.connection
+                )
 
 
 def db_connection(cursor_factory: Optional[Callable] = None):
@@ -172,7 +220,7 @@ def db_connection(cursor_factory: Optional[Callable] = None):
     return inner
 
 
-def retry_connection(limit: int = 5, interval: int = 5):
+def retry_connection(limit: int = 5, interval: int = 2):
     """
     Декоратор для повторных попыток подключения к базе данных.
 
